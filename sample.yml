@@ -1,0 +1,16 @@
+---
+- name: AWS sample
+  hosts: localhost
+  gather_facts: false
+  collections:
+  - amazon.aws
+  tasks:
+
+  - name: create a VPC
+    ec2_vpc_net:
+      name: test_vpc
+      cidr_block: 10.1.0.0/16
+      region: eu-central-1
+    register: vpc
+
+  - debug: var=vpc
