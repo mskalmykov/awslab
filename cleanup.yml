@@ -1,16 +1,15 @@
 ---
-- name: AWS sample
+- name: Destroy WordPress lab infrastructure
   hosts: localhost
+  connection: local
   gather_facts: false
   collections:
   - amazon.aws
   tasks:
 
-  - name: create a VPC
+  - name: Delete VPC
     ec2_vpc_net:
-      name: test_vpc
+      name: wp_lab_vpc
       cidr_block: 10.1.0.0/16
       region: eu-central-1
-    register: vpc
-
-  - debug: var=vpc
+      state: absent
