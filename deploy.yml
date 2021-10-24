@@ -1,0 +1,9 @@
+---
+- name: Deploy WordPress in AWS cloud
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  collections:
+  - amazon.aws
+  roles:
+  - aws_wp
