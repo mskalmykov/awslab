@@ -45,19 +45,40 @@
       Name: "{{ route_table_name }}"
   register: route_table
 
-- name: Create security group
+- name: Create webservers security group
   ec2_group:
-    name: "{{ security_group_name }}"
+    name: "{{ security_group_web_name }}"
     description: Security group for WP servers
     vpc_id: "{{ vpc.vpc.id }}"
     rules:
-      - { proto: icmp, ports: -1, group_name: "{{ security_group_name }}" }
+      - { proto: icmp, ports: -1, group_name: "{{ security_group_web_name }}" }
       - { proto: tcp, ports: 22,  cidr_ip: 0.0.0.0/0 }
       - { proto: tcp, ports: 80,  cidr_ip: 0.0.0.0/0 }
       - { proto: tcp, ports: 443, cidr_ip: 0.0.0.0/0 }
     tags:
-      Name: "{{ security_group_name }}"
-  register: security_group
+      Name: "{{ security_group_web_name }}"
+  register: security_group_web
+
+- name: Create EFS security group
+  ec2_group:
+    name: "{{ security_group_efs_name }}"
+    description: Security group for EFS access
+    vpc_id: "{{ vpc.vpc.id }}"
+    rules:
+      - { proto: tcp, ports: 2049,  group_name: "{{ security_group_web_name }}" }
+    tags:
+      Name: "{{ security_group_efs_name }}"
+  register: security_group_efs
+
+- name: Create EFS
+  efs:
+    name: "{{ efs_name }}"
+    targets:
+      - subnet_id: "{{ subnet_left.subnet.id }}"
+        security_groups: [ "{{ security_group_efs.group_id }}" ]
+      - subnet_id: "{{ subnet_right.subnet.id }}"
+        security_groups: [ "{{ security_group_efs.group_id }}" ]
+  register: efs
 
 - name: Create EC2 keypair
   ec2_key:
@@ -79,11 +100,12 @@
     region: "{{ vpc_region }}"
     vpc_subnet_id: "{{ subnet_left.subnet.id }}"
     instance_type: "{{ ec2_instance_type }}"
-    security_group: "{{ security_group.group_id }}"
+    security_group: "{{ security_group_web.group_id }}"
     network:
       assign_public_ip: true
     image_id: "{{ ec2_instance_ami }}"
     state: running
+    user_data: "{{ lookup('template', 'user_data.j2') }}"
   register: ec2_instance_left
 
 - name: Create EC2 instance for the right subnet
@@ -93,14 +115,18 @@
     region: "{{ vpc_region }}"
     vpc_subnet_id: "{{ subnet_right.subnet.id }}"
     instance_type: "{{ ec2_instance_type }}"
-    security_group: "{{ security_group.group_id }}"
+    security_group: "{{ security_group_web.group_id }}"
     network:
       assign_public_ip: true
     image_id: "{{ ec2_instance_ami }}"
     state: running
+    user_data: "{{ lookup('template', 'user_data.j2') }}"
   register: ec2_instance_right
 
 - debug: 
     msg: "Public IPs: {{ ec2_instance_left.instances[0].public_ip_address }} and {{ ec2_instance_right.instances[0].public_ip_address }}"
+  when: 
+    - ec2_instance_left.instances[0].public_ip_address is defined
+    - ec2_instance_right.instances[0].public_ip_address is defined
 
 
