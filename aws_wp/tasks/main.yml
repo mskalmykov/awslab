@@ -61,6 +61,7 @@
     description: Security group for WP servers
     vpc_id: "{{ vpc.vpc.id }}"
     rules:
+      - { proto: icmp, ports: -1, group_name: "{{ security_group_name }}" }
       - { proto: tcp, ports: 22,  cidr_ip: 0.0.0.0/0 }
       - { proto: tcp, ports: 80,  cidr_ip: 0.0.0.0/0 }
       - { proto: tcp, ports: 443, cidr_ip: 0.0.0.0/0 }
@@ -69,3 +70,36 @@
   register: security_group
 
 - debug: var=security_group
+
+- name: Create EC2 instance for the left subnet
+  ec2_instance:
+    name: "{{ ec2_instance_left_name }}"
+    key_name: "{{ ssh_key_name }}"
+    region: "{{ vpc_region }}"
+    vpc_subnet_id: "{{ subnet_left.subnet.id }}"
+    instance_type: "{{ ec2_instance_type }}"
+    security_group: "{{ security_group.group_id }}"
+    network:
+      assign_public_ip: true
+    image_id: "{{ ec2_instance_ami }}"
+    state: running
+  register: ec2_instance_left
+
+- debug: var=ec2_instance_left
+
+- name: Create EC2 instance for the right subnet
+  ec2_instance:
+    name: "{{ ec2_instance_right_name }}"
+    key_name: "{{ ssh_key_name }}"
+    region: "{{ vpc_region }}"
+    vpc_subnet_id: "{{ subnet_right.subnet.id }}"
+    instance_type: "{{ ec2_instance_type }}"
+    security_group: "{{ security_group.group_id }}"
+    network:
+      assign_public_ip: true
+    image_id: "{{ ec2_instance_ami }}"
+    state: running
+  register: ec2_instance_right
+
+- debug: var=ec2_instance_right
+
