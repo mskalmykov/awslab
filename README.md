@@ -7,6 +7,7 @@ sudo yum -y install epel-release
 sudo yum -y install ansible
 sudo pip3 install boto3
 ansible-galaxy collection install amazon.aws
+ansible-galaxy collection install community.aws
 export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
 export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 export AWS_DEFAULT_REGION=eu-central-1
