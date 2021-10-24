@@ -22,4 +22,7 @@ ec2_instance_ami: ami-0245697ee3e07e755
 ec2_instance_left_name: wp_lab_ec2_left
 ec2_instance_right_name: wp_lab_ec2_right
 
-ssh_key_name: mskawslearn1-pair1
+ssh_key_name: wp_lab_ssh_key
+# if you define your own key file name, make sure that it is added to .gitignore
+# or even better use the path outside the repo (e.g. ~/.ssh/my_key_pem)
+ssh_key_file: ssh-key.pem

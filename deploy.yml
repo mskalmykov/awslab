@@ -4,6 +4,6 @@
   connection: local
   gather_facts: false
   collections:
-  - amazon.aws
+    - amazon.aws
   roles:
-  - aws_wp
+    - aws_wp

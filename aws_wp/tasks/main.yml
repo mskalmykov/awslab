@@ -6,8 +6,6 @@
     region: "{{ vpc_region }}"
   register: vpc
 
-- debug: var=vpc
-
 - name: Create left subnet
   ec2_vpc_subnet:
     vpc_id: "{{ vpc.vpc.id }}"
@@ -16,8 +14,6 @@
     tags:
       Name: "{{ subnet_left_name }}"
   register: subnet_left
-
-- debug: var=subnet_left
 
 - name: Create right subnet
   ec2_vpc_subnet:
@@ -28,16 +24,12 @@
       Name: "{{ subnet_right_name }}"
   register: subnet_right
 
-- debug: var=subnet_right
-
 - name: Create Internet gateway
   ec2_vpc_igw:
     vpc_id: "{{ vpc.vpc.id }}"
     tags:
       Name: "{{ igw_name }}"
   register: igw
-
-- debug: var=igw
 
 - name: Create route table
   ec2_vpc_route_table:
@@ -53,8 +45,6 @@
       Name: "{{ route_table_name }}"
   register: route_table
 
-- debug: var=route_table
-
 - name: Create security group
   ec2_group:
     name: "{{ security_group_name }}"
@@ -69,7 +59,18 @@
       Name: "{{ security_group_name }}"
   register: security_group
 
-- debug: var=security_group
+- name: Create EC2 keypair
+  ec2_key:
+    name: "{{ ssh_key_name }}"
+    region: "{{ vpc_region }}"
+  register: ssh_key
+
+- name: Save private key (if generated)
+  copy:
+    content: "{{ ssh_key.key.private_key }}"
+    dest: ssh-key.pem
+    mode: 0600
+  when: ssh_key.key.private_key is defined
 
 - name: Create EC2 instance for the left subnet
   ec2_instance:
@@ -85,8 +86,6 @@
     state: running
   register: ec2_instance_left
 
-- debug: var=ec2_instance_left
-
 - name: Create EC2 instance for the right subnet
   ec2_instance:
     name: "{{ ec2_instance_right_name }}"
@@ -101,5 +100,7 @@
     state: running
   register: ec2_instance_right
 
-- debug: var=ec2_instance_right
+- debug: 
+    msg: "Public IPs: {{ ec2_instance_left.instances[0].public_ip_address }} and {{ ec2_instance_right.instances[0].public_ip_address }}"
+
 
