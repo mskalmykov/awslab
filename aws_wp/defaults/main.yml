@@ -16,6 +16,7 @@ igw_name: wp_lab_igw
 route_table_name: wp_lab_rt
 security_group_web_name: wp_lab_sg_web
 security_group_efs_name: wp_lab_sg_efs
+security_group_rds_name: wp_lab_sg_rds
 efs_name: wp_lab_efs
 
 ec2_instance_type: t2.micro
@@ -30,3 +31,11 @@ ssh_key_name: wp_lab_ssh_key
 ssh_key_file: ssh-key.pem
 
 www_html_dir: /var/www/html
+
+rds_subnet_group_name: wp_lab_subnet_group
+rds_engine_version: 8.0.26
+rds_instance_id: wp-lab-rds
+rds_instance_class: db.t2.micro
+rds_username: admin
+rds_password: Naepoo0ii8Pahn
+rds_storage_alloc: 20

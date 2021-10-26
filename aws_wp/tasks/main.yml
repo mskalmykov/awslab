@@ -70,6 +70,17 @@
       Name: "{{ security_group_efs_name }}"
   register: security_group_efs
 
+- name: Create RDS security group
+  ec2_group:
+    name: "{{ security_group_rds_name }}"
+    description: Security group for RDS access
+    vpc_id: "{{ vpc.vpc.id }}"
+    rules:
+      - { proto: tcp, ports: 3306,  group_name: "{{ security_group_web_name }}" }
+    tags:
+      Name: "{{ security_group_rds_name }}"
+  register: security_group_rds
+
 - name: Create EFS
   efs:
     name: "{{ efs_name }}"
@@ -122,6 +133,33 @@
     state: running
     user_data: "{{ lookup('template', 'user_data.j2') }}"
   register: ec2_instance_right
+
+- name: Create RDS subnet group
+  rds_subnet_group:
+    state: present
+    name: "{{ rds_subnet_group_name }}"
+    description: "{{ rds_subnet_group_name }}"
+    subnets:
+      - "{{ subnet_left.subnet.id }}"
+      - "{{ subnet_right.subnet.id }}"
+  register: rds_sg
+
+- name: Create RDS instance
+  rds_instance:
+    engine: mysql
+    engine_version: "{{ rds_engine_version }}"
+    db_instance_identifier: "{{ rds_instance_id }}"
+    db_instance_class: "{{ rds_instance_class }}"
+    allocated_storage: "{{ rds_storage_alloc }}"
+    db_subnet_group_name: "{{ rds_sg.subnet_group.db_subnet_group_name }}"
+    vpc_security_group_ids: [ "{{ security_group_rds.group_id }}" ]
+    username: "{{ rds_username }}"
+    password: "{{ rds_password }}"
+    publicly_accessible: no
+    state: running
+  register: rds_instance
+
+- debug: var=rds_instance
 
 - debug: 
     msg: "Public IPs: {{ ec2_instance_left.instances[0].public_ip_address }} and {{ ec2_instance_right.instances[0].public_ip_address }}"
