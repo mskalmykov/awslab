@@ -14,6 +14,7 @@ subnet_right_az: eu-central-1b
 
 igw_name: wp_lab_igw
 route_table_name: wp_lab_rt
+security_group_elb_name: wp_lab_sg_elb
 security_group_web_name: wp_lab_sg_web
 security_group_efs_name: wp_lab_sg_efs
 security_group_rds_name: wp_lab_sg_rds
@@ -24,6 +25,8 @@ ec2_instance_type: t2.micro
 ec2_instance_ami: ami-0245697ee3e07e755
 ec2_instance_left_name: wp_lab_ec2_left
 ec2_instance_right_name: wp_lab_ec2_right
+elb_target_group_name: wp-lab-elb-target-group
+elb_name: wp-lab-elb
 
 ssh_key_name: wp_lab_ssh_key
 # if you define your own key file name, make sure that it is added to .gitignore

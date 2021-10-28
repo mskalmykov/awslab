@@ -6,3 +6,5 @@ echo -n {{ efs.efs.filesystem_address }} {{ www_html_dir }} >> /etc/fstab
 echo -n ' nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,' >> /etc/fstab
 echo    'hard,timeo=600,retrans=2,noresvport 0 0' >> /etc/fstab
 mount {{ www_html_dir }}
+apt-get -y install default-mysql-client
+apt-get -y install apache2
