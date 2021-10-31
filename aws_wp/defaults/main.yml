@@ -42,3 +42,12 @@ rds_instance_class: db.t2.micro
 rds_username: admin
 rds_password: Naepoo0ii8Pahn
 rds_storage_alloc: 20
+
+# WordPress related stuff
+wp_dbname: wordpress
+wp_dbuser: wpuser
+wp_dbpassword: shieTh9f
+wp_site_title: DevOps school AWS lab
+wp_admin_user: wpadmin
+wp_admin_password: xieSh2Zu
+wp_admin_email: Mikhail_Kalmykov@epam.com

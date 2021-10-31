@@ -141,6 +141,17 @@
     mode: 0600
   when: ssh_key.key.private_key is defined
 
+- name: Create empty Application Load Balancer
+  elb_application_lb:
+    name: "{{ elb_name }}"
+    security_groups:
+      - "{{ security_group_elb.group_id }}"
+    subnets:
+      - "{{ subnet_left.subnet.id }}"
+      - "{{ subnet_right.subnet.id }}"
+    state: present
+  register: elb
+
 - name: Create EC2 instance for the left subnet
   ec2_instance:
     name: "{{ ec2_instance_left_name }}"
@@ -188,7 +199,7 @@
     state: present
   register: elb_target_group
 
-- name: Create Application Load Balancer
+- name: Update Application Load Balancer
   elb_application_lb:
     name: "{{ elb_name }}"
     security_groups:
