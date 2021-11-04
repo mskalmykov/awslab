@@ -1,15 +1,16 @@
 ---
-- name: Destroy WordPress lab infrastructure
+#  - name: Delete VPC
+#    ec2_vpc_net:
+#      name: wp_lab_vpc
+#      cidr_block: 10.1.0.0/16
+#      region: eu-central-1
+#      state: absent
+- name: Destroy lab infrastructure
   hosts: localhost
   connection: local
   gather_facts: false
   collections:
-  - amazon.aws
-  tasks:
-
-  - name: Delete VPC
-    ec2_vpc_net:
-      name: wp_lab_vpc
-      cidr_block: 10.1.0.0/16
-      region: eu-central-1
-      state: absent
+    - amazon.aws
+    - community.aws
+  roles:
+    - { role: aws_wp, infra_state: absent }

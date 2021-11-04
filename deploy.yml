@@ -7,4 +7,4 @@
     - amazon.aws
     - community.aws
   roles:
-    - aws_wp
+    - { role: aws_wp, infra_state: present }
