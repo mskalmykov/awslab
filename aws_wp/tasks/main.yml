@@ -4,6 +4,9 @@
     name: "{{ vpc_name }}"
     cidr_block: "{{ vpc_cidr }}"
     region: "{{ vpc_region }}"
+    tags:
+      Name: "{{ vpc_name }}"
+      ProjectID: "{{ project_id }}"
   register: vpc
 
 - name: Create left subnet
@@ -13,6 +16,7 @@
     az: "{{ subnet_left_az }}"
     tags:
       Name: "{{ subnet_left_name }}"
+      ProjectID: "{{ project_id }}"
   register: subnet_left
 
 - name: Create right subnet
@@ -22,6 +26,7 @@
     az: "{{ subnet_right_az }}"
     tags:
       Name: "{{ subnet_right_name }}"
+      ProjectID: "{{ project_id }}"
   register: subnet_right
 
 - name: Create Internet gateway
@@ -29,6 +34,7 @@
     vpc_id: "{{ vpc.vpc.id }}"
     tags:
       Name: "{{ igw_name }}"
+      ProjectID: "{{ project_id }}"
   register: igw
 
 - name: Create route table
@@ -43,6 +49,7 @@
         gateway_id: "{{ igw.gateway_id }}"
     tags:
       Name: "{{ route_table_name }}"
+      ProjectID: "{{ project_id }}"
   register: route_table
 
 - name: Create ELB security group
@@ -55,6 +62,7 @@
       - { proto: tcp, ports: 443, cidr_ip: 0.0.0.0/0 }
     tags:
       Name: "{{ security_group_elb_name }}"
+      ProjectID: "{{ project_id }}"
   register: security_group_elb
 
 - name: Create webservers security group
@@ -69,6 +77,7 @@
       - { proto: tcp, ports: 443, group_name: "{{ security_group_elb_name }}" }
     tags:
       Name: "{{ security_group_web_name }}"
+      ProjectID: "{{ project_id }}"
   register: security_group_web
 
 - name: Create EFS security group
@@ -80,6 +89,7 @@
       - { proto: tcp, ports: 2049,  group_name: "{{ security_group_web_name }}" }
     tags:
       Name: "{{ security_group_efs_name }}"
+      ProjectID: "{{ project_id }}"
   register: security_group_efs
 
 - name: Create RDS security group
@@ -91,7 +101,22 @@
       - { proto: tcp, ports: 3306,  group_name: "{{ security_group_web_name }}" }
     tags:
       Name: "{{ security_group_rds_name }}"
+      ProjectID: "{{ project_id }}"
   register: security_group_rds
+
+- name: Create empty Application Load Balancer
+  elb_application_lb:
+    name: "{{ elb_name }}"
+    security_groups:
+      - "{{ security_group_elb.group_id }}"
+    subnets:
+      - "{{ subnet_left.subnet.id }}"
+      - "{{ subnet_right.subnet.id }}"
+    state: present
+    tags:
+      Name: "{{ elb_name }}"
+      ProjectID: "{{ project_id }}"
+  register: elb
 
 - name: Create RDS subnet group
   rds_subnet_group:
@@ -116,6 +141,9 @@
     password: "{{ rds_password }}"
     publicly_accessible: no
     state: started
+    tags:
+      Name: "{{ rds_instance_id }}"
+      ProjectID: "{{ project_id }}"
   register: rds_instance
 
 - name: Create EFS
@@ -126,6 +154,9 @@
         security_groups: [ "{{ security_group_efs.group_id }}" ]
       - subnet_id: "{{ subnet_right.subnet.id }}"
         security_groups: [ "{{ security_group_efs.group_id }}" ]
+    tags:
+      Name: "{{ efs_name }}"
+      ProjectID: "{{ project_id }}"
   register: efs
 
 - name: Create EC2 keypair
@@ -137,20 +168,9 @@
 - name: Save private key (if generated)
   copy:
     content: "{{ ssh_key.key.private_key }}"
-    dest: ssh-key.pem
+    dest: "{{ ssh_key_file }}"
     mode: 0600
   when: ssh_key.key.private_key is defined
-
-- name: Create empty Application Load Balancer
-  elb_application_lb:
-    name: "{{ elb_name }}"
-    security_groups:
-      - "{{ security_group_elb.group_id }}"
-    subnets:
-      - "{{ subnet_left.subnet.id }}"
-      - "{{ subnet_right.subnet.id }}"
-    state: present
-  register: elb
 
 - name: Create EC2 instance for the left subnet
   ec2_instance:
@@ -165,6 +185,9 @@
     image_id: "{{ ec2_instance_ami }}"
     state: running
     user_data: "{{ lookup('template', 'user_data.j2') }}"
+    tags:
+      Name: "{{ ec2_instance_left_name }}"
+      ProjectID: "{{ project_id }}"
   register: ec2_instance_left
 
 - name: Create EC2 instance for the right subnet
@@ -180,6 +203,9 @@
     image_id: "{{ ec2_instance_ami }}"
     state: running
     user_data: "{{ lookup('template', 'user_data.j2') }}"
+    tags:
+      Name: "{{ ec2_instance_right_name }}"
+      ProjectID: "{{ project_id }}"
   register: ec2_instance_right
 
 - name: Create a target group for ELB
@@ -197,6 +223,9 @@
       - Id: "{{ ec2_instance_right.instances[0].instance_id }}"
         Port: 80
     state: present
+    tags:
+      Name: "{{ elb_target_group_name }}"
+      ProjectID: "{{ project_id }}"
   register: elb_target_group
 
 - name: Update Application Load Balancer
@@ -214,6 +243,9 @@
           - Type: forward
             TargetGroupName: "{{ elb_target_group_name }}"
     state: present
+    tags:
+      Name: "{{ elb_name }}"
+      ProjectID: "{{ project_id }}"
   register: elb
 
 - debug: var=rds_instance.endpoint.address

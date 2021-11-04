@@ -1,5 +1,9 @@
 ---
 # defaults (to be overriden by playbook using this role)
+
+# Random string to tag every object created (used later for cleanup)
+project_id: mskalmykov-37356c5c686d6e52
+
 vpc_name: wp_lab_vpc
 vpc_cidr: 10.1.0.0/16
 vpc_region: eu-central-1
