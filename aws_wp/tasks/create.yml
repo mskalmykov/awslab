@@ -13,6 +13,7 @@
   ec2_vpc_subnet:
     vpc_id: "{{ vpc.vpc.id }}"
     cidr: "{{ subnet_left_cidr }}"
+    region: "{{ vpc_region }}"
     az: "{{ subnet_left_az }}"
     tags:
       Name: "{{ subnet_left_name }}"
@@ -23,6 +24,7 @@
   ec2_vpc_subnet:
     vpc_id: "{{ vpc.vpc.id }}"
     cidr: "{{ subnet_right_cidr }}"
+    region: "{{ vpc_region }}"
     az: "{{ subnet_right_az }}"
     tags:
       Name: "{{ subnet_right_name }}"
@@ -32,6 +34,7 @@
 - name: Create Internet gateway
   ec2_vpc_igw:
     vpc_id: "{{ vpc.vpc.id }}"
+    region: "{{ vpc_region }}"
     tags:
       Name: "{{ igw_name }}"
       ProjectID: "{{ project_id }}"
@@ -57,6 +60,7 @@
     name: "{{ security_group_elb_name }}"
     description: Security group for ELB
     vpc_id: "{{ vpc.vpc.id }}"
+    region: "{{ vpc_region }}"
     rules:
       - { proto: tcp, ports: 80,  cidr_ip: 0.0.0.0/0 }
       - { proto: tcp, ports: 443, cidr_ip: 0.0.0.0/0 }
@@ -70,6 +74,7 @@
     name: "{{ security_group_web_name }}"
     description: Security group for WP servers
     vpc_id: "{{ vpc.vpc.id }}"
+    region: "{{ vpc_region }}"
     rules:
       - { proto: icmp, ports: -1, group_name: "{{ security_group_web_name }}" }
       - { proto: tcp, ports: 22,  cidr_ip: 0.0.0.0/0 }
@@ -85,6 +90,7 @@
     name: "{{ security_group_efs_name }}"
     description: Security group for EFS access
     vpc_id: "{{ vpc.vpc.id }}"
+    region: "{{ vpc_region }}"
     rules:
       - { proto: tcp, ports: 2049,  group_name: "{{ security_group_web_name }}" }
     tags:
@@ -97,6 +103,7 @@
     name: "{{ security_group_rds_name }}"
     description: Security group for RDS access
     vpc_id: "{{ vpc.vpc.id }}"
+    region: "{{ vpc_region }}"
     rules:
       - { proto: tcp, ports: 3306,  group_name: "{{ security_group_web_name }}" }
     tags:
@@ -107,6 +114,7 @@
 - name: Create empty Application Load Balancer
   elb_application_lb:
     name: "{{ elb_name }}"
+    region: "{{ vpc_region }}"
     security_groups:
       - "{{ security_group_elb.group_id }}"
     subnets:
@@ -123,13 +131,20 @@
     state: present
     name: "{{ rds_subnet_group_name }}"
     description: "{{ rds_subnet_group_name }}"
+    region: "{{ vpc_region }}"
     subnets:
       - "{{ subnet_left.subnet.id }}"
       - "{{ subnet_right.subnet.id }}"
   register: rds_sg
 
+- debug:
+    msg: 
+      - "The following two tasks will take 10-15 minutes to complete."
+      - "Just relax and take a cup of tea, while we are preparing for the show."
+
 - name: Create RDS instance
   rds_instance:
+    region: "{{ vpc_region }}"
     engine: mysql
     engine_version: "{{ rds_engine_version }}"
     db_instance_identifier: "{{ rds_instance_id }}"
@@ -149,6 +164,7 @@
 - name: Create EFS
   efs:
     name: "{{ efs_name }}"
+    region: "{{ vpc_region }}"
     targets:
       - subnet_id: "{{ subnet_left.subnet.id }}"
         security_groups: [ "{{ security_group_efs.group_id }}" ]
@@ -214,6 +230,7 @@
     protocol: http
     port: 80
     vpc_id: "{{ vpc.vpc.id }}"
+    region: "{{ vpc_region }}"
     health_check_protocol: http
     health_check_path: /
     successful_response_codes: "200"
@@ -231,6 +248,7 @@
 - name: Update Application Load Balancer
   elb_application_lb:
     name: "{{ elb_name }}"
+    region: "{{ vpc_region }}"
     security_groups:
       - "{{ security_group_elb.group_id }}"
     subnets:
@@ -248,11 +266,22 @@
       ProjectID: "{{ project_id }}"
   register: elb
 
-- debug: var=rds_instance.endpoint.address
-- debug: var=elb.dns_name
+- debug:
+    msg: 
+      - "Site address: http://{{ elb.dns_name }}"
+      - "  Admin page: http://{{ elb.dns_name }}/wp-admin/"
+      - "    Username: {{ wp_admin_user }}"
+      - "    Password: {{ wp_admin_password }}"
 
 - debug: 
-    msg: "Public IPs: {{ ec2_instance_left.instances[0].public_ip_address }} and {{ ec2_instance_right.instances[0].public_ip_address }}"
+    msg: 
+      - "You may also manage EC2 nodes via ssh using the following commands:"
+      - "    ssh -i {{ ssh_key_file }} admin@{{ec2_instance_left.instances[0].public_ip_address}}"
+      - "    ssh -i {{ ssh_key_file }} admin@{{ec2_instance_right.instances[0].public_ip_address}}"
+      - "RDS database management (from EC2 instances):"
+      - "   mysql -h {{ rds_instance.endpoint.address }}"
+      - "         -u {{ rds_username }}"
+      - "         -p{{ rds_password }} "
   when: 
     - ec2_instance_left.instances[0].public_ip_address is defined
     - ec2_instance_right.instances[0].public_ip_address is defined

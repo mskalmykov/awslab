@@ -1,10 +1,4 @@
 ---
-#  - name: Delete VPC
-#    ec2_vpc_net:
-#      name: wp_lab_vpc
-#      cidr_block: 10.1.0.0/16
-#      region: eu-central-1
-#      state: absent
 - name: Destroy lab infrastructure
   hosts: localhost
   connection: local
