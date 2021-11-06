@@ -1,4 +1,4 @@
-Ansible role to deploy AWS infrastructure for WordPress.
+## Ansible role to deploy AWS infrastructure for WordPress
 
 To run the playbooks, you need Ansible 2.10, Python 3.9 and the latest botocore and boto3 python packages. The easiest way to get the required environment is to use the attached Dockerfile.
 Just run:
@@ -10,7 +10,7 @@ Just run:
 
 If you prefer the manual way, then use the following commands.
 
-For Debian 11 (the most tested distro):
+- For Debian 11 (the most tested distro):
 ```bash
 sudo apt update
 sudo apt install ansible python3-pip
@@ -18,7 +18,7 @@ python3.9 -m pip install --user botocore boto3
 ansible-galaxy collection install community.aws
 ```
 
-For Ubuntu 20.04:
+- For Ubuntu 20.04:
 ```bash
 sudo apt update
 sudo apt install software-properties-common python3-pip
@@ -28,7 +28,7 @@ python3 -m pip install --user botocore boto3
 ansible-galaxy collection install community.aws
 ```
 
-For CentOS 8:
+- For CentOS 8:
 ```bash
 sudo yum update
 sudo yum install python39
@@ -37,7 +37,7 @@ ansible-galaxy collection install community.aws
 echo "interpreter_python = /usr/bin/python3.9" >> ansible.cfg
 ```
 
-Set the environment prior to run the playbooks:
+After install is done, set the environment prior to run the playbooks:
 ```bash
 export AWS_ACCESS_KEY_ID=YOURACCESSKEYIDHERE
 export AWS_SECRET_ACCESS_KEY=YOURACTUALSECRETACCESSKEYCOMESHERE
